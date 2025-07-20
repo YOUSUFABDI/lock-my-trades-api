@@ -1,0 +1,58 @@
+name: Deploy Backend to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            echo "🔁 Changing to project directory..."
+            cd /home/lock-my-trades/lock-my-trades-api
+
+            echo "🔄 Pulling latest code from GitHub..."
+            git reset --hard
+            git clean -fd
+            git pull origin main
+
+            echo "📦 Installing dependencies..."
+            npm install --legacy-peer-deps
+
+            echo "🔧 Building the project..."
+            npm run build
+
+            echo "🛠️ Writing environment variables..."
+            cat > .env <<EOF
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            MYSQL_USER=${{ secrets.MYSQL_USER }}
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}
+            EOF
+
+            echo "🧬 Running Prisma..."
+            npx prisma generate
+            npx prisma migrate deploy
+
+            echo "🚀 Restarting backend with PM2..."
+            pm2 reload lock-my-trades-api || pm2 start dist/main.js --name lock-my-trades-api
+
+            echo "✅ Deployed."
