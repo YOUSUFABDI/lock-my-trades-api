@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma.service';
 import { SignupDto } from './dto/signup.dto';
@@ -13,13 +17,17 @@ export class AuthService {
   ) {}
 
   async signup(dto: SignupDto) {
-    const hash = await bcrypt.hash(dto.password, 10);
+    try {
+      const hash = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.prisma.user.create({
-      data: { email: dto.email, password: hash },
-    });
+      const user = await this.prisma.user.create({
+        data: { email: dto.email, password: hash },
+      });
 
-    return this.signToken(user.id, user.email);
+      return this.signToken(user.id, user.email);
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   async login(dto: LoginDto) {
@@ -35,7 +43,6 @@ export class AuthService {
 
   private signToken(userId: string, email: string) {
     const payload = { sub: userId, email };
-
     return { access_token: this.jwt.sign(payload) };
   }
 }
