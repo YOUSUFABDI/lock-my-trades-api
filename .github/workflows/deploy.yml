@@ -32,7 +32,7 @@ jobs:
             git pull origin main
 
             echo "📦 Installing dependencies..."
-            npm install --legacy-peer-deps
+            npm install --force
 
             echo "🔧 Building the project..."
             npm run build
