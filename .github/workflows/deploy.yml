@@ -24,7 +24,7 @@ jobs:
             set -e
 
             echo "🔁 Changing to project directory..."
-            cd /home/lock-my-trades/lock-my-trades-api
+            cd /home/ubuntu/lock-my-trades-api
 
             echo "🔄 Pulling latest code from GitHub..."
             git reset --hard
