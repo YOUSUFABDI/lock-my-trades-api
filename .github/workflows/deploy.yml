@@ -20,7 +20,7 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
-          timeout: 60 # Timeout in seconds
+          timeout: 60s # Timeout in seconds
           script: |
             set -e
 
