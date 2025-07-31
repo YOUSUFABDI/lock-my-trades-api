@@ -20,7 +20,10 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
-          timeout: 15m # Timeout in seconds
+          # Timeout for the SSH connection
+          timeout: 60s
+          # Timeout for the command execution on the server
+          command_timeout: 20m
           script: |
             set -e
 
@@ -33,12 +36,14 @@ jobs:
             git pull origin main
 
             echo "📦 Installing dependencies..."
-            npm install --force
+            # Using npm ci is generally faster and more reliable for CI/CD
+            npm ci --force
 
             echo "🔧 Building the project..."
             npm run build
 
             echo "🛠️ Writing environment variables..."
+            # Using cat ensures the file is created or overwritten cleanly
             cat > .env <<EOF
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
@@ -54,6 +59,10 @@ jobs:
             npx prisma migrate deploy
 
             echo "🚀 Restarting backend with PM2..."
-            pm2 reload lock-my-trades-api || pm2 start dist/main.js --name lock-my-trades-api
+            # 'restart' is more robust than 'reload'. It will start the app if it's not running.
+            pm2 restart lock-my-trades-api || pm2 start dist/main.js --name lock-my-trades-api
 
-            echo "✅ Deployed."
+            # Save the PM2 process list to resurrect on server reboot
+            pm2 save
+
+            echo "✅ Deployment successful."
