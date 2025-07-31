@@ -23,21 +23,21 @@ model User {
 }
 
 model Trade {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   userId     String
   platform   String
   symbol     String
   direction  String
   entryTime  DateTime
-  exitTime   DateTime
+  exitTime   DateTime?
   entryPrice Float
   exitPrice  Float
   quantity   Float
   result     Float
-  ticketId   String   @unique
-  tags       Json     @default("[]")
+  ticketId   String    @unique
+  tags       Json      @default("[]")
   notes      String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id])
 }
