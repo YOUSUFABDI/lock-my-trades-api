@@ -14,7 +14,14 @@ export class TradeService {
       });
       if (!exists) {
         const created = await this.prisma.trade.create({
-          data: { ...t, userId },
+          data: {
+            ...t,
+            user: {
+              connect: {
+                id: userId,
+              },
+            },
+          },
         });
         saved.push(created);
       }
