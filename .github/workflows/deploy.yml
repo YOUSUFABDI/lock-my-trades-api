@@ -14,24 +14,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Cache Node modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
-
       - name: Deploy over SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_PRIVATE_KEY }}
-          timeout: 60s # Timeout in seconds
+          timeout: 15m # Timeout in seconds
           script: |
             set -e
-            set -x  # Added command tracing for better debugging
 
             echo "🔁 Changing to project directory..."
             cd /home/ubuntu/lock-my-trades-api
@@ -45,7 +36,7 @@ jobs:
             npm install --force
 
             echo "🔧 Building the project..."
-            timeout 15m npm run build  # Added timeout for build step (15 minutes)
+            npm run build
 
             echo "🛠️ Writing environment variables..."
             cat > .env <<EOF
