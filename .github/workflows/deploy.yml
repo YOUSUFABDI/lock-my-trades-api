@@ -97,7 +97,7 @@ jobs:
             git clean -fd
             git pull origin main
 
-            echo "📦 Installing dependencies..."
+            echo "📦 Installing dependencies...."
             npm install --force
 
             echo "🛠️ Writing environment variables..."
