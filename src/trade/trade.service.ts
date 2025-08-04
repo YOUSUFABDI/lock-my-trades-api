@@ -6,41 +6,17 @@ import { CreateTradeDto } from './dto/create-trade.dto';
 export class TradeService {
   constructor(private prisma: PrismaService) {}
 
-  // async bulkImport(trades: CreateTradeDto[], userId: string) {
-  //   const saved = [];
-  //   for (const t of trades) {
-  //     const exists = await this.prisma.trade.findUnique({
-  //       where: { ticketId: t.ticketId },
-  //     });
-  //     if (!exists) {
-  //       const created = await this.prisma.trade.create({
-  //         data: {
-  //           ...t,
-  //           user: {
-  //             connect: {
-  //               id: userId,
-  //             },
-  //           },
-  //         },
-  //       });
-  //       saved.push(created);
-  //     }
-  //   }
-  //   return { result: saved.length, imported: saved };
-  // }
-
   async bulkImport(trades: CreateTradeDto[], userId: string) {
-    const results = [];
+    const saved = [];
 
     for (const t of trades) {
-      // upsert: if ticketId exists, update; otherwise create
-      const saved = await this.prisma.trade.upsert({
+      const upserted = await this.prisma.trade.upsert({
         where: { ticketId: t.ticketId },
         update: {
-          // only update open‐trade fields; closed trades will never change
+          // only update exitPrice, result, exitTime, tags & notes
           exitPrice: t.exitPrice,
           result: t.result,
-          exitTime: t.exitTime, // null for open trades, or actual time for closed
+          exitTime: t.exitTime, // null or an ISO string
           tags: t.tags,
           notes: t.notes,
         },
@@ -49,13 +25,9 @@ export class TradeService {
           user: { connect: { id: userId } },
         },
       });
-
-      results.push(saved);
+      saved.push(upserted);
     }
 
-    return {
-      result: results.length,
-      imported: results,
-    };
+    return { result: saved.length, imported: saved };
   }
 }
